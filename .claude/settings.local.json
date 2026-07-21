@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /Users/denizibmlaptop/Documents/ 2>/dev/null | grep -i -E \"realmo|brrrr|real\"; echo \"---CURRENT DIR---\"; ls -la /Users/denizibmlaptop/Documents/RealMo3/ 2>/dev/null)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(python3 -)",
+      "Bash(npm run *)",
+      "Bash(git init *)",
+      "Bash(gh auth *)",
+      "Bash(git -C /Users/denizibmlaptop/Documents/RealMo remote -v)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'BRRRR OS v3 — AI-native operating system for real estate investors *)",
+      "Bash(git count-objects *)"
+    ]
+  }
+}

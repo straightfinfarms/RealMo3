@@ -1,0 +1,65 @@
+/* ============================================================================
+ * BRRRR OS design tokens — the entire visual language lives here.
+ * Dark is the default ("mission control at night"); light is opt-in.
+ * ========================================================================== */
+:root {
+  /* type */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* radii + motion */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --t-fast: 120ms var(--ease);
+  --t-med: 200ms var(--ease);
+
+  /* semantic accents (shared across themes) */
+  --accent: #4f8cff;
+  --accent-soft: rgba(79, 140, 255, 0.14);
+  --green: #34c98e;
+  --green-soft: rgba(52, 201, 142, 0.14);
+  --yellow: #e8b93c;
+  --yellow-soft: rgba(232, 185, 60, 0.15);
+  --red: #f0616d;
+  --red-soft: rgba(240, 97, 109, 0.13);
+  --purple: #a78bfa;
+  --purple-soft: rgba(167, 139, 250, 0.14);
+  --cyan: #4dd0e1;
+  --cyan-soft: rgba(77, 208, 225, 0.13);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0d11;            /* app canvas */
+  --bg-raised: #11141a;     /* sidebar / topbar */
+  --surface: #151922;       /* cards */
+  --surface-2: #1b2029;     /* nested surfaces, inputs */
+  --surface-3: #232935;     /* hover */
+  --border: #232935;
+  --border-strong: #303847;
+  --text: #e8ecf4;
+  --text-2: #9aa5b8;        /* secondary */
+  --text-3: #5d6778;        /* tertiary / placeholders */
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --scrim: rgba(4, 6, 10, 0.66);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f6f7f9;
+  --bg-raised: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --surface-3: #e9edf2;
+  --border: #e4e8ee;
+  --border-strong: #d2d9e2;
+  --text: #171c26;
+  --text-2: #5b6575;
+  --text-3: #98a2b3;
+  --shadow: 0 10px 32px rgba(23, 28, 38, 0.10);
+  --shadow-sm: 0 2px 8px rgba(23, 28, 38, 0.07);
+  --scrim: rgba(23, 28, 38, 0.35);
+  color-scheme: light;
+}
