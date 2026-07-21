@@ -16,7 +16,15 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Bash(git credential *)",
-      "Bash(git commit -q -m 'Add GitHub Pages auto-deploy \\(Actions workflow + relative base\\) *)"
+      "Bash(git commit -q -m 'Add GitHub Pages auto-deploy \\(Actions workflow + relative base\\) *)",
+      "Bash(brew --version)",
+      "Read(//Users/denizibmlaptop/**)",
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com)",
+      "Bash(mkdir -p ~/.ssh)",
+      "Bash(chmod 700 ~/.ssh)",
+      "Bash(ssh-keygen -t ed25519 -C \"hello@straightfinfarms.com\" -f ~/.ssh/id_ed25519 -N \"\" -q)",
+      "Bash(ssh-keyscan -t ed25519,rsa github.com)",
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=8 -T git@github.com)"
     ]
   }
 }
