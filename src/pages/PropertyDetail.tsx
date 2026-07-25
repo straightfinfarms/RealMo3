@@ -10,8 +10,11 @@ import { propertyMetrics, renoHealth } from "@/engine/insights";
 import {
   underwrite, scoreDeal, pricepoints, fmtCompact, fmtMoney, fmtPct,
 } from "@/engine/underwrite";
-import { Badge, Cover, ScoreDial, Bar, gradeColor, healthColor, Empty, toast } from "@/components/ui";
-import { STAGES, STAGE_LABELS, OWNED_STAGES } from "@/data/types";
+import { Badge, Cover, ScoreDial, Bar, gradeColor, healthColor, Empty, Modal, toast } from "@/components/ui";
+import {
+  STAGES, STAGE_LABELS, OWNED_STAGES, PROPERTY_TYPE_LABELS,
+  type Property, type Loan, type PropertyType,
+} from "@/data/types";
 import { todayISO } from "@/data/seed";
 
 type Tab = "overview" | "underwriting" | "money" | "tenants" | "docs" | "timeline";
@@ -25,9 +28,13 @@ export function PropertyDetail() {
   const toggleTodo = useStore((s) => s.toggleTodo);
   const addTodo = useStore((s) => s.addTodo);
   const addTimeline = useStore((s) => s.addTimeline);
+  const updateProperty = useStore((s) => s.updateProperty);
+  const updateLoan = useStore((s) => s.updateLoan);
   const [tab, setTab] = useState<Tab>("overview");
   const [newTask, setNewTask] = useState("");
   const [newNote, setNewNote] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
 
   const p = properties.find((x) => x.id === id);
   const data = dataSnapshot();
@@ -87,6 +94,7 @@ export function PropertyDetail() {
           </div>
         </div>
         <div className="spacer">
+          <button className="btn ghost sm" onClick={() => setEditing(true)}>✎ Edit</button>
           <button className="btn ghost sm" disabled={stageIdx === 0} onClick={() => advance(-1)}>◀ {stageIdx > 0 ? STAGE_LABELS[STAGES[stageIdx - 1]] : ""}</button>
           <button className="btn sm" disabled={stageIdx === STAGES.length - 1} onClick={() => advance(1)}>
             {stageIdx < STAGES.length - 1 ? STAGE_LABELS[STAGES[stageIdx + 1]] : ""} ▶
@@ -255,9 +263,12 @@ export function PropertyDetail() {
               {loans.length === 0 && <div className="faint" style={{ fontSize: 12 }}>No active loans.</div>}
               {loans.map((l) => (
                 <div key={l.id} style={{ fontSize: 12.5, marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span className="strong">{l.lender}</span>
-                    <b>{fmtCompact(l.currentBalance)}</b>
+                    <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <b>{fmtCompact(l.currentBalance)}</b>
+                      <button className="btn subtle sm" title="Edit loan" onClick={() => setEditingLoan(l)}>✎</button>
+                    </span>
                   </div>
                   <div className="faint" style={{ fontSize: 11.5 }}>
                     {l.kind} · {fmtPct(l.ratePct)} · {fmtMoney(l.monthlyPayment)}/mo
@@ -299,8 +310,10 @@ export function PropertyDetail() {
             <div className="card-head">
               <div>
                 <div className="card-title">Pro-forma (stabilized, post-refi)</div>
-                <div className="card-sub">Edit inputs in the Deal Analyzer, or ask the Copilot for what-ifs</div>
+                <div className="card-sub">Rents, expenses & financing assumptions</div>
               </div>
+              <span className="spacer" />
+              <Link to={`/analyzer/${p.id}`} className="btn ghost sm">✎ Edit inputs</Link>
             </div>
             <table className="tbl">
               <tbody>
@@ -488,6 +501,162 @@ export function PropertyDetail() {
           )}
         </div>
       )}
+
+      {editing && (
+        <EditPropertyModal
+          property={p}
+          onClose={() => setEditing(false)}
+          onSave={(patch) => {
+            updateProperty(p.id, patch);
+            setEditing(false);
+            toast("Property updated");
+          }}
+          onDelete={() => {
+            useStore.getState().deleteProperty(p.id);
+            toast(`${p.name} deleted`);
+            nav("/properties");
+          }}
+        />
+      )}
+
+      {editingLoan && (
+        <LoanEditModal
+          loan={editingLoan}
+          onClose={() => setEditingLoan(null)}
+          onSave={(patch) => {
+            updateLoan(editingLoan.id, patch);
+            setEditingLoan(null);
+            toast("Loan updated");
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/* ---------- edit property (all non-calculated fields) ---------- */
+function EditPropertyModal(props: {
+  property: Property;
+  onClose: () => void;
+  onSave: (patch: Partial<Property>) => void;
+  onDelete: () => void;
+}) {
+  const p = props.property;
+  const [f, setF] = useState({
+    name: p.name, address: p.address, city: p.city,
+    propertyType: p.propertyType,
+    yearBuilt: p.yearBuilt ?? 0, sqft: p.sqft ?? 0,
+    currentValue: p.currentValue,
+    purchaseDate: p.purchaseDate ?? "",
+    actualRehabSpent: p.actualRehabSpent ?? 0,
+    notes: p.notes ?? "",
+  });
+  const set = (k: keyof typeof f, v: string | number) => setF((s) => ({ ...s, [k]: v }));
+
+  return (
+    <Modal title={`Edit ${p.name}`} onClose={props.onClose}>
+      <div className="grid g2">
+        <div className="field"><label>Name</label>
+          <input value={f.name} onChange={(e) => set("name", e.target.value)} /></div>
+        <div className="field"><label>Type</label>
+          <select value={f.propertyType} onChange={(e) => set("propertyType", e.target.value)}>
+            {Object.entries(PROPERTY_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select></div>
+        <div className="field"><label>Address</label>
+          <input value={f.address} onChange={(e) => set("address", e.target.value)} /></div>
+        <div className="field"><label>City</label>
+          <input value={f.city} onChange={(e) => set("city", e.target.value)} /></div>
+        <div className="field"><label>Current value (est.)</label>
+          <input type="number" value={f.currentValue} onChange={(e) => set("currentValue", +e.target.value)} /></div>
+        <div className="field"><label>Purchase date</label>
+          <input type="date" value={f.purchaseDate} onChange={(e) => set("purchaseDate", e.target.value)} /></div>
+        <div className="field"><label>Year built</label>
+          <input type="number" value={f.yearBuilt || ""} onChange={(e) => set("yearBuilt", +e.target.value)} /></div>
+        <div className="field"><label>Sqft</label>
+          <input type="number" value={f.sqft || ""} onChange={(e) => set("sqft", +e.target.value)} /></div>
+        <div className="field" style={{ gridColumn: "1 / -1" }}><label>Actual rehab spent</label>
+          <input type="number" value={f.actualRehabSpent || ""} onChange={(e) => set("actualRehabSpent", +e.target.value)} /></div>
+        <div className="field" style={{ gridColumn: "1 / -1" }}><label>Notes</label>
+          <textarea rows={3} value={f.notes} onChange={(e) => set("notes", e.target.value)} /></div>
+      </div>
+      <p className="card-sub" style={{ marginTop: 10 }}>
+        Rents, expenses, financing assumptions live in the Underwriting inputs — edit those in the
+        Deal Analyzer (“Load from property”, then “Save changes back”).
+      </p>
+      <div className="modal-actions" style={{ justifyContent: "space-between" }}>
+        <button
+          className="btn danger"
+          onClick={() => {
+            if (confirm(`Delete ${p.name}? This removes its loans, tenants, transactions, documents and history. This cannot be undone.`)) {
+              props.onDelete();
+            }
+          }}
+        >Delete property…</button>
+        <span style={{ display: "flex", gap: 8 }}>
+          <button className="btn ghost" onClick={props.onClose}>Cancel</button>
+          <button className="btn" disabled={!f.name.trim()} onClick={() =>
+            props.onSave({
+              name: f.name.trim(), address: f.address, city: f.city,
+              propertyType: f.propertyType as PropertyType,
+              yearBuilt: f.yearBuilt || undefined, sqft: f.sqft || undefined,
+              currentValue: f.currentValue,
+              purchaseDate: f.purchaseDate || undefined,
+              actualRehabSpent: f.actualRehabSpent || undefined,
+              notes: f.notes || undefined,
+            })
+          }>Save changes</button>
+        </span>
+      </div>
+    </Modal>
+  );
+}
+
+/* ---------- edit loan ---------- */
+function LoanEditModal(props: {
+  loan: Loan;
+  onClose: () => void;
+  onSave: (patch: Partial<Loan>) => void;
+}) {
+  const l = props.loan;
+  const [f, setF] = useState({
+    lender: l.lender, kind: l.kind, currentBalance: l.currentBalance,
+    ratePct: l.ratePct, termYears: l.termYears, monthlyPayment: l.monthlyPayment,
+    active: l.active,
+  });
+  const set = (k: keyof typeof f, v: string | number | boolean) => setF((s) => ({ ...s, [k]: v }));
+
+  return (
+    <Modal title={`Edit loan — ${l.lender}`} onClose={props.onClose}>
+      <div className="grid g2">
+        <div className="field"><label>Lender</label>
+          <input value={f.lender} onChange={(e) => set("lender", e.target.value)} /></div>
+        <div className="field"><label>Kind</label>
+          <select value={f.kind} onChange={(e) => set("kind", e.target.value)}>
+            <option value="acquisition">Acquisition</option>
+            <option value="refinance">Refinance</option>
+            <option value="heloc">HELOC</option>
+            <option value="private">Private</option>
+          </select></div>
+        <div className="field"><label>Current balance</label>
+          <input type="number" value={f.currentBalance} onChange={(e) => set("currentBalance", +e.target.value)} /></div>
+        <div className="field"><label>Rate %</label>
+          <input type="number" step={0.05} value={f.ratePct} onChange={(e) => set("ratePct", +e.target.value)} /></div>
+        <div className="field"><label>Amortization (yrs)</label>
+          <input type="number" value={f.termYears} onChange={(e) => set("termYears", +e.target.value)} /></div>
+        <div className="field"><label>Monthly payment</label>
+          <input type="number" value={f.monthlyPayment} onChange={(e) => set("monthlyPayment", +e.target.value)} /></div>
+        <div className="field" style={{ gridColumn: "1 / -1" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)}
+              style={{ accentColor: "var(--accent)", width: "auto" }} />
+            Active (uncheck when paid off / replaced by a refinance)
+          </label>
+        </div>
+      </div>
+      <div className="modal-actions">
+        <button className="btn ghost" onClick={props.onClose}>Cancel</button>
+        <button className="btn" onClick={() => props.onSave({ ...f, kind: f.kind as Loan["kind"] })}>Save loan</button>
+      </div>
+    </Modal>
   );
 }

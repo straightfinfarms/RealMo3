@@ -1,11 +1,11 @@
 /* ============================================================================
  * Tenants — the rent roll: every lease, status, exposure, expiry radar.
  * ========================================================================== */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "@/store/store";
 import { fmtMoney } from "@/engine/underwrite";
-import { Badge, Cover, toast } from "@/components/ui";
+import { Badge, Cover, Modal, toast } from "@/components/ui";
 import { todayISO } from "@/data/seed";
 import type { Tenant } from "@/data/types";
 
@@ -17,6 +17,7 @@ export function Tenants() {
   const tenants = useStore((s) => s.tenants);
   const properties = useStore((s) => s.properties);
   const updateTenant = useStore((s) => s.updateTenant);
+  const [editing, setEditing] = useState<Tenant | null>(null);
   const today = todayISO();
 
   const stats = useMemo(() => {
@@ -80,7 +81,7 @@ export function Tenants() {
           <thead>
             <tr>
               <th>Property / Unit</th><th>Tenant</th><th className="num">Rent</th>
-              <th>Lease</th><th>Status</th><th className="num">Balance</th>
+              <th>Lease</th><th>Status</th><th className="num">Balance</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -118,12 +119,71 @@ export function Tenants() {
                   <td className={`num ${t.balanceOwed > 0 ? "neg strong" : "muted"}`}>
                     {t.balanceOwed > 0 ? fmtMoney(t.balanceOwed) : "—"}
                   </td>
+                  <td>
+                    <button className="btn subtle sm" title="Edit tenant" onClick={() => setEditing(t)}>✎</button>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {editing && (
+        <TenantEditModal
+          tenant={editing}
+          onClose={() => setEditing(null)}
+          onSave={(patch) => {
+            updateTenant(editing.id, patch);
+            setEditing(null);
+            toast("Tenant updated");
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function TenantEditModal(props: {
+  tenant: Tenant;
+  onClose: () => void;
+  onSave: (patch: Partial<Tenant>) => void;
+}) {
+  const t = props.tenant;
+  const [f, setF] = useState({
+    name: t.name, email: t.email, phone: t.phone, unitLabel: t.unitLabel,
+    rent: t.rent, leaseStart: t.leaseStart, leaseEnd: t.leaseEnd,
+    balanceOwed: t.balanceOwed,
+  });
+  const set = (k: keyof typeof f, v: string | number) => setF((s) => ({ ...s, [k]: v }));
+
+  return (
+    <Modal title={`Edit tenant — ${t.unitLabel}`} onClose={props.onClose}>
+      <div className="grid g2">
+        <div className="field"><label>Name</label>
+          <input value={f.name} onChange={(e) => set("name", e.target.value)} autoFocus /></div>
+        <div className="field"><label>Unit</label>
+          <input value={f.unitLabel} onChange={(e) => set("unitLabel", e.target.value)} /></div>
+        <div className="field"><label>Email</label>
+          <input value={f.email} onChange={(e) => set("email", e.target.value)} /></div>
+        <div className="field"><label>Phone</label>
+          <input value={f.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+        <div className="field"><label>Rent / mo</label>
+          <input type="number" value={f.rent} onChange={(e) => set("rent", +e.target.value)} /></div>
+        <div className="field"><label>Balance owed</label>
+          <input type="number" value={f.balanceOwed || ""} placeholder="0"
+            onChange={(e) => set("balanceOwed", +e.target.value || 0)} /></div>
+        <div className="field"><label>Lease start</label>
+          <input type="date" value={f.leaseStart} onChange={(e) => set("leaseStart", e.target.value)} /></div>
+        <div className="field"><label>Lease end</label>
+          <input type="date" value={f.leaseEnd} onChange={(e) => set("leaseEnd", e.target.value)} /></div>
+      </div>
+      <div className="modal-actions">
+        <button className="btn ghost" onClick={props.onClose}>Cancel</button>
+        <button className="btn" disabled={!f.name.trim()} onClick={() => props.onSave({ ...f, name: f.name.trim() })}>
+          Save tenant
+        </button>
+      </div>
+    </Modal>
   );
 }

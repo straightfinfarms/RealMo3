@@ -2,8 +2,8 @@
  * Analyzer — live BRRRR underwriting. Everything recalculates on keystroke.
  * Load any pipeline property, tweak, compare rate scenarios, save as a lead.
  * ========================================================================== */
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useStore, uid } from "@/store/store";
 import {
   underwrite, scoreDeal, pricepoints, UW_DEFAULTS,
@@ -57,10 +57,24 @@ export function Analyzer() {
   const nav = useNavigate();
   const properties = useStore((s) => s.properties);
   const addProperty = useStore((s) => s.addProperty);
+  const updateProperty = useStore((s) => s.updateProperty);
   const settings = useStore((s) => s.settings);
+  const { id: routeId } = useParams();
   const [uwInputs, setUwInputs] = useState<Underwriting>({ ...UW_DEFAULTS });
   const [name, setName] = useState("New Prospect");
   const [loadedFrom, setLoadedFrom] = useState<string>("");
+
+  // Deep link: /analyzer/:id preloads that property's underwriting.
+  useEffect(() => {
+    if (!routeId) return;
+    const p = properties.find((x) => x.id === routeId);
+    if (p) {
+      setUwInputs({ ...p.underwriting });
+      setName(p.name);
+      setLoadedFrom(p.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeId]);
 
   const r = useMemo(() => underwrite(uwInputs), [uwInputs]);
   const score = useMemo(() => scoreDeal(r), [r]);
@@ -125,7 +139,21 @@ export function Analyzer() {
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button className="btn" onClick={save}>+ Save to pipeline</button>
+          {loadedFrom && (
+            <button
+              className="btn ghost"
+              onClick={() => {
+                const src = properties.find((x) => x.id === loadedFrom);
+                if (!src) return;
+                updateProperty(loadedFrom, { underwriting: { ...uwInputs } });
+                toast(`Underwriting saved back to ${src.name}`);
+                nav(`/properties/${loadedFrom}`);
+              }}
+            >
+              ✎ Save changes back
+            </button>
+          )}
+          <button className="btn" onClick={save}>+ Save as new lead</button>
         </div>
       </div>
 

@@ -177,6 +177,7 @@ function Shell() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/analyzer" element={<Analyzer />} />
+              <Route path="/analyzer/:id" element={<Analyzer />} />
               <Route path="/properties" element={<Properties />} />
               <Route path="/properties/:id" element={<PropertyDetail />} />
               <Route path="/renovation" element={<Renovation />} />

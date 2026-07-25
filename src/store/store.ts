@@ -8,7 +8,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   AppData, Property, Stage, TodoItem, Transaction, Doc, TimelineEvent,
-  RenovationProject, Tenant, Settings, RenoTask, BudgetLine,
+  RenovationProject, Tenant, Settings, RenoTask, BudgetLine, Loan,
 } from "@/data/types";
 import { STAGE_LABELS } from "@/data/types";
 import { seedData, todayISO } from "@/data/seed";
@@ -27,6 +27,7 @@ interface AppState extends AppData {
   updateProperty: (id: string, patch: Partial<Property>) => void;
   moveStage: (id: string, stage: Stage) => void;
   archiveProperty: (id: string) => void;
+  deleteProperty: (id: string) => void;
 
   // todos
   addTodo: (t: TodoItem) => void;
@@ -44,11 +45,15 @@ interface AppState extends AppData {
   updateBudgetLine: (projectId: string, lineId: string, patch: Partial<BudgetLine>) => void;
   addRenoTask: (projectId: string, task: RenoTask) => void;
 
-  // tenants
+  // tenants & loans
   updateTenant: (id: string, patch: Partial<Tenant>) => void;
+  addTenant: (t: Tenant) => void;
+  addLoan: (l: Loan) => void;
+  updateLoan: (id: string, patch: Partial<Loan>) => void;
 
   // data management
   resetToSeed: () => void;
+  clearAll: () => void;
   importData: (data: AppData) => void;
 }
 
@@ -103,6 +108,19 @@ export const useStore = create<AppState>()(
           properties: s.properties.map((p) => (p.id === id ? { ...p, archived: true } : p)),
         })),
 
+      /** Hard delete: removes the property and everything attached to it. */
+      deleteProperty: (id) =>
+        set((s) => ({
+          properties: s.properties.filter((p) => p.id !== id),
+          loans: s.loans.filter((l) => l.propertyId !== id),
+          tenants: s.tenants.filter((t) => t.propertyId !== id),
+          renovations: s.renovations.filter((r) => r.propertyId !== id),
+          transactions: s.transactions.filter((t) => t.propertyId !== id),
+          docs: s.docs.filter((d) => d.propertyId !== id),
+          timeline: s.timeline.filter((e) => e.propertyId !== id),
+          todos: s.todos.filter((t) => t.propertyId !== id),
+        })),
+
       addTodo: (t) => set((s) => ({ todos: [t, ...s.todos] })),
       toggleTodo: (id) =>
         set((s) => ({
@@ -147,6 +165,20 @@ export const useStore = create<AppState>()(
       updateTenant: (id, patch) =>
         set((s) => ({
           tenants: s.tenants.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        })),
+
+      addTenant: (t) => set((s) => ({ tenants: [...s.tenants, t] })),
+      addLoan: (l) => set((s) => ({ loans: [...s.loans, l] })),
+      updateLoan: (id, patch) =>
+        set((s) => ({
+          loans: s.loans.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+        })),
+
+      clearAll: () =>
+        set((s) => ({
+          properties: [], loans: [], tenants: [], renovations: [],
+          contractors: [], transactions: [], docs: [], timeline: [], todos: [],
+          settings: s.settings, // keep API key, theme, targets
         })),
 
       resetToSeed: () => {

@@ -16,6 +16,7 @@ export function Settings() {
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
   const resetToSeed = useStore((s) => s.resetToSeed);
+  const clearAll = useStore((s) => s.clearAll);
   const importData = useStore((s) => s.importData);
   const [showKey, setShowKey] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -148,6 +149,17 @@ export function Settings() {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn ghost" onClick={exportData}>⬇ Export JSON</button>
           <button className="btn ghost" onClick={() => fileRef.current?.click()}>⬆ Import JSON</button>
+          <button
+            className="btn ghost"
+            onClick={() => {
+              if (confirm("Start fresh with an EMPTY portfolio? All demo/current data is removed (export first if unsure). Your API key and preferences are kept.")) {
+                clearAll();
+                toast("Fresh start — add your first property from the Properties page");
+              }
+            }}
+          >
+            ✨ Start fresh (my own portfolio)
+          </button>
           <button
             className="btn danger"
             onClick={() => {
