@@ -11,6 +11,7 @@ import {
 import { underwrite, scoreDeal, pricepoints } from "@/engine/underwrite";
 import { todayISO } from "@/data/seed";
 import type { Property } from "@/data/types";
+import { COST_CATALOG } from "@/data/costCatalog";
 
 export interface ToolDef {
   name: string;
@@ -124,6 +125,12 @@ export const TOOL_DEFS: ToolDef[] = [
   {
     name: "get_contractors",
     description: "Contractor directory with trade, rating, insurance/license status and notes.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "get_renovation_cost_catalog",
+    description:
+      "The app's renovation cost-element catalog: ~30 standard rehab elements with rental-grade low/avg/high unit costs (2026 averages), grouped by category, phase and trade. Use to estimate renovation budgets conversationally, sanity-check contractor quotes, or draft a scope of work. For a full guided estimate, point the user to the Reno Estimator page.",
     input_schema: { type: "object", properties: {} },
   },
   {
@@ -319,6 +326,9 @@ export function runTool(name: string, input: Record<string, unknown>): unknown {
 
     case "get_contractors":
       return data.contractors;
+
+    case "get_renovation_cost_catalog":
+      return COST_CATALOG.map(({ defaultQty, ...item }) => item);
 
     case "create_task": {
       const prop =

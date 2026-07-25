@@ -42,6 +42,7 @@ rates drop 1%?" · "Where is the Queen St budget going over?"*
 | **Deal Analyzer** | Live underwriting: BRRRR score (cash-flow dominant), purchase pricepoints, rate sensitivity, 5-yr IRR |
 | **Properties** | The hub record — underwriting, financials, tenants, docs, timeline per property |
 | **Renovation OS** | Budgets vs spend, work plans, contractor compliance, automatic detections (overruns, scope creep, schedule risk) |
+| **Reno Estimator** | Guided workflow: pick cost elements (industry-average 2026 pricing, editable) → tiered budget → generated scope of work → phased work plan → vendor matching by trade |
 | **Tenants** | Rent roll, arrears exposure, lease-expiry radar |
 | **Financials** | Ledger, 30-day P&L, expense breakdown |
 | **Refinance Engine** | Continuous cash-out scanner — the "Repeat" |

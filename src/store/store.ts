@@ -41,6 +41,7 @@ interface AppState extends AppData {
   addTimeline: (e: TimelineEvent) => void;
 
   // renovation
+  addRenovation: (r: RenovationProject) => void;
   updateRenoTask: (projectId: string, taskId: string, patch: Partial<RenoTask>) => void;
   updateBudgetLine: (projectId: string, lineId: string, patch: Partial<BudgetLine>) => void;
   addRenoTask: (projectId: string, task: RenoTask) => void;
@@ -131,6 +132,8 @@ export const useStore = create<AppState>()(
 
       addDoc: (docItem) => set((s) => ({ docs: [docItem, ...s.docs] })),
       addTimeline: (e) => set((s) => ({ timeline: [e, ...s.timeline] })),
+
+      addRenovation: (r) => set((s) => ({ renovations: [...s.renovations, r] })),
 
       updateRenoTask: (projectId, taskId, patch) =>
         set((s) => ({

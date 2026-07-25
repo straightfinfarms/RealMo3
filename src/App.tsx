@@ -13,6 +13,7 @@ import { Properties } from "@/pages/Properties";
 import { PropertyDetail } from "@/pages/PropertyDetail";
 import { Analyzer } from "@/pages/Analyzer";
 import { Renovation } from "@/pages/Renovation";
+import { RenoEstimator } from "@/pages/RenoEstimator";
 import { Financials } from "@/pages/Financials";
 import { Refinance } from "@/pages/Refinance";
 import { Tenants } from "@/pages/Tenants";
@@ -30,6 +31,7 @@ const NAV = [
   { section: "Portfolio", items: [
     { to: "/properties", icon: "⌂", label: "Properties" },
     { to: "/renovation", icon: "🛠", label: "Renovation" },
+    { to: "/estimator", icon: "∑", label: "Reno Estimator" },
     { to: "/tenants", icon: "👥", label: "Tenants" },
   ]},
   { section: "Capital", items: [
@@ -48,6 +50,7 @@ const TITLES: Record<string, string> = {
   "/analyzer": "Deal Analyzer",
   "/properties": "Properties",
   "/renovation": "Renovation OS",
+  "/estimator": "Renovation Estimator",
   "/tenants": "Tenants",
   "/financials": "Financials",
   "/refinance": "Refinance Engine",
@@ -181,6 +184,7 @@ function Shell() {
               <Route path="/properties" element={<Properties />} />
               <Route path="/properties/:id" element={<PropertyDetail />} />
               <Route path="/renovation" element={<Renovation />} />
+              <Route path="/estimator" element={<RenoEstimator />} />
               <Route path="/tenants" element={<Tenants />} />
               <Route path="/financials" element={<Financials />} />
               <Route path="/refinance" element={<Refinance />} />

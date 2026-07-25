@@ -3,7 +3,7 @@
  * (overruns, scope creep, schedule risk, blocked work, missing insurance).
  * ========================================================================== */
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useStore, uid } from "@/store/store";
 import { renoHealth } from "@/engine/insights";
 import { fmtCompact, fmtMoney } from "@/engine/underwrite";
@@ -19,6 +19,7 @@ const STATUS_META: Record<RenoTaskStatus, { label: string; color: "gray" | "blue
 };
 
 export function Renovation() {
+  const nav = useNavigate();
   const renovations = useStore((s) => s.renovations);
   const properties = useStore((s) => s.properties);
   const contractors = useStore((s) => s.contractors);
@@ -32,7 +33,16 @@ export function Renovation() {
   const proj = renovations.find((r) => r.id === selId) ?? renovations[0];
 
   if (!proj) {
-    return <Empty icon="🛠" title="No renovation projects" sub="Move a property into the Renovation stage to start one." />;
+    return (
+      <div className="card empty">
+        <div className="empty-icon">🛠</div>
+        <div style={{ fontWeight: 650, color: "var(--text-2)" }}>No renovation projects</div>
+        <div style={{ fontSize: 12, margin: "6px 0 14px" }}>
+          Estimate costs element-by-element, generate a scope of work, and spin up a phased work plan.
+        </div>
+        <button className="btn" onClick={() => nav("/estimator")}>∑ New renovation estimate</button>
+      </div>
+    );
   }
 
   const h = renoHealth(proj, today);
@@ -54,6 +64,7 @@ export function Renovation() {
           <div className="section-sub">Budget, schedule, crews — with automatic risk detection</div>
         </div>
         <div className="spacer">
+          <button className="btn" onClick={() => nav("/estimator")}>∑ New estimate</button>
           <select
             value={proj.id}
             onChange={(e) => setSelId(e.target.value)}
