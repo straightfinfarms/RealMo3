@@ -551,6 +551,7 @@ function EditPropertyModal(props: {
     actualRehabSpent: p.actualRehabSpent ?? 0,
     notes: p.notes ?? "",
   });
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const set = (k: keyof typeof f, v: string | number) => setF((s) => ({ ...s, [k]: v }));
 
   return (
@@ -583,15 +584,19 @@ function EditPropertyModal(props: {
         Rents, expenses, financing assumptions live in the Underwriting inputs — edit those in the
         Deal Analyzer (“Load from property”, then “Save changes back”).
       </p>
-      <div className="modal-actions" style={{ justifyContent: "space-between" }}>
-        <button
-          className="btn danger"
-          onClick={() => {
-            if (confirm(`Delete ${p.name}? This removes its loans, tenants, transactions, documents and history. This cannot be undone.`)) {
-              props.onDelete();
-            }
-          }}
-        >Delete property…</button>
+      <div className="modal-actions" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        {!confirmingDelete ? (
+          <button className="btn danger" onClick={() => setConfirmingDelete(true)}>
+            Delete property…
+          </button>
+        ) : (
+          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button className="btn danger" onClick={props.onDelete}>
+              ⚠ Confirm delete — removes loans, tenants, history
+            </button>
+            <button className="btn subtle sm" onClick={() => setConfirmingDelete(false)}>keep it</button>
+          </span>
+        )}
         <span style={{ display: "flex", gap: 8 }}>
           <button className="btn ghost" onClick={props.onClose}>Cancel</button>
           <button className="btn" disabled={!f.name.trim()} onClick={() =>
