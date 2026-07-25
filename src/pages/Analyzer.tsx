@@ -9,8 +9,9 @@ import {
   underwrite, scoreDeal, pricepoints, UW_DEFAULTS,
   fmtCompact, fmtMoney, fmtPct,
 } from "@/engine/underwrite";
-import type { Underwriting } from "@/data/types";
-import { ScoreDial, Bar, Badge, toast } from "@/components/ui";
+import type { Underwriting, Stage } from "@/data/types";
+import { OWNED_STAGES, STAGE_LABELS } from "@/data/types";
+import { ScoreDial, Bar, Badge, Modal, toast } from "@/components/ui";
 import { todayISO } from "@/data/seed";
 
 type NumKey = {
@@ -95,19 +96,26 @@ export function Analyzer() {
   }, [uwInputs]);
 
   const set = (k: NumKey, v: number) => setUwInputs((s) => ({ ...s, [k]: v }));
+  const [saveChoice, setSaveChoice] = useState(false);
+  const [ownedStage, setOwnedStage] = useState<Stage>("occupied");
 
-  const save = () => {
+  const save = (owned: boolean, stage: Stage = "lead") => {
     const id = uid();
     addProperty({
       id, name, address: "Address TBD", city: "—",
       propertyType: uwInputs.units >= 5 ? "small_multifamily" : uwInputs.units === 4 ? "fourplex" : uwInputs.units === 3 ? "triplex" : uwInputs.units === 2 ? "duplex" : "single_family",
-      stage: "lead", stageEnteredDate: todayISO(),
+      stage: owned ? stage : "lead",
+      stageEnteredDate: todayISO(),
       photoHue: Math.floor(Math.random() * 360),
-      underwriting: { ...uwInputs },
-      currentValue: uwInputs.price,
-      notes: `Underwritten in Analyzer — score ${score.total} (${score.grade}).`,
+      underwriting: owned
+        ? { ...uwInputs, arvMode: "manual", arvManual: r.arv }
+        : { ...uwInputs },
+      currentValue: owned ? r.arv : uwInputs.price,
+      purchaseDate: owned ? todayISO() : undefined,
+      actualRehabSpent: owned ? uwInputs.rehabBudget : undefined,
+      notes: `Underwritten in Analyzer — score ${score.total} (${score.grade}).${owned ? " Add the mortgage and tenants from the property page." : ""}`,
     });
-    toast(`${name} saved to pipeline as Lead`);
+    toast(owned ? `${name} added to your portfolio (${STAGE_LABELS[stage]})` : `${name} saved to watchlist as Lead`);
     nav(`/properties/${id}`);
   };
 
@@ -153,9 +161,57 @@ export function Analyzer() {
               ✎ Save changes back
             </button>
           )}
-          <button className="btn" onClick={save}>+ Save as new lead</button>
+          <button className="btn" onClick={() => setSaveChoice(true)}>+ Save property</button>
         </div>
       </div>
+
+      {saveChoice && (
+        <Modal title={`Save “${name}”`} onClose={() => setSaveChoice(false)}>
+          <p className="card-sub" style={{ marginBottom: 16 }}>
+            Is this a deal you're watching, or a property you already own?
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button
+              className="btn ghost"
+              style={{ justifyContent: "flex-start", padding: "12px 14px" }}
+              onClick={() => { setSaveChoice(false); save(false); }}
+            >
+              <span style={{ fontSize: 16 }}>📋</span>
+              <span style={{ textAlign: "left" }}>
+                <b>Watchlist — pipeline Lead</b>
+                <span className="faint" style={{ display: "block", fontSize: 11.5 }}>
+                  Track it through Offer → Closing → BRRRR cycle
+                </span>
+              </span>
+            </button>
+            <div
+              className="card"
+              style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 14px" }}
+            >
+              <span style={{ fontSize: 16 }}>🏠</span>
+              <span style={{ flex: 1 }}>
+                <b style={{ fontSize: 13 }}>I already own it</b>
+                <span className="faint" style={{ display: "block", fontSize: 11.5 }}>
+                  Added at its stabilized value ({fmtCompact(r.arv)}) — add mortgage &amp; tenants after
+                </span>
+              </span>
+              <select
+                value={ownedStage}
+                onChange={(e) => setOwnedStage(e.target.value as Stage)}
+                style={{
+                  background: "var(--surface-2)", border: "1px solid var(--border)",
+                  borderRadius: 6, padding: "5px 8px", color: "var(--text)", fontSize: 12,
+                }}
+              >
+                {OWNED_STAGES.map((s) => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
+              </select>
+              <button className="btn sm" onClick={() => { setSaveChoice(false); save(true, ownedStage); }}>
+                Add to portfolio
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       <div className="grid" style={{ gridTemplateColumns: "minmax(300px, 1fr) 1.4fr" }}>
         {/* inputs */}

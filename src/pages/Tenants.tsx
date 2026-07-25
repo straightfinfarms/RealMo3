@@ -144,7 +144,7 @@ export function Tenants() {
   );
 }
 
-function TenantEditModal(props: {
+export function TenantEditModal(props: {
   tenant: Tenant;
   onClose: () => void;
   onSave: (patch: Partial<Tenant>) => void;

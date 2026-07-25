@@ -31,7 +31,8 @@
       "Bash(git commit -q --allow-empty -m 'Retrigger Pages deploy *)",
       "Bash(curl -s \"https://api.github.com/repos/straightfinfarms/RealMo3/actions/runs?per_page=1\")",
       "Bash(python3 -c \"import json,sys; r=json.load\\(sys.stdin\\)['workflow_runs'][0]; print\\('workflow:', r['status'], '·', r['conclusion']\\)\")",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://straightfinfarms.github.io/RealMo3/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://straightfinfarms.github.io/RealMo3/)",
+      "Bash(git commit -q -m 'Analyzer save asks watchlist vs owned; add loan/tenant from property page *)"
     ]
   }
 }

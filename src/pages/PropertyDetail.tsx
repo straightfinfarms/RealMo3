@@ -16,8 +16,13 @@ import {
   type Property, type Loan, type PropertyType,
 } from "@/data/types";
 import { todayISO } from "@/data/seed";
+import { TenantEditModal } from "./Tenants";
+import { monthlyPayment } from "@/engine/underwrite";
+import type { Tenant } from "@/data/types";
 
 type Tab = "overview" | "underwriting" | "money" | "tenants" | "docs" | "timeline";
+
+const NEW_LOAN = "__new__";
 
 export function PropertyDetail() {
   const { id } = useParams();
@@ -35,6 +40,7 @@ export function PropertyDetail() {
   const [newNote, setNewNote] = useState("");
   const [editing, setEditing] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
+  const [addingTenant, setAddingTenant] = useState(false);
 
   const p = properties.find((x) => x.id === id);
   const data = dataSnapshot();
@@ -259,7 +265,20 @@ export function PropertyDetail() {
             </div>
 
             <div className="card">
-              <div className="card-head"><div className="card-title">Loans</div></div>
+              <div className="card-head">
+                <div className="card-title">Loans</div>
+                <span className="spacer" />
+                <button
+                  className="btn subtle sm"
+                  onClick={() =>
+                    setEditingLoan({
+                      id: NEW_LOAN, propertyId: p.id, lender: "", kind: "acquisition",
+                      originalAmount: 0, currentBalance: 0, ratePct: 6.5, termYears: 30,
+                      startDate: todayISO(), monthlyPayment: 0, active: true,
+                    })
+                  }
+                >+ add</button>
+              </div>
               {loans.length === 0 && <div className="faint" style={{ fontSize: 12 }}>No active loans.</div>}
               {loans.map((l) => (
                 <div key={l.id} style={{ fontSize: 12.5, marginBottom: 10 }}>
@@ -420,6 +439,9 @@ export function PropertyDetail() {
       {/* ============ TENANTS ============ */}
       {tab === "tenants" && (
         <div className="card" style={{ padding: 6 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", padding: "6px 8px 0" }}>
+            <button className="btn ghost sm" onClick={() => setAddingTenant(true)}>+ Add tenant</button>
+          </div>
           {tenants.length === 0 ? (
             <Empty icon="👥" title="No tenants" sub={owned ? "List the units to fill them." : "Not owned yet."} />
           ) : (
@@ -524,9 +546,48 @@ export function PropertyDetail() {
           loan={editingLoan}
           onClose={() => setEditingLoan(null)}
           onSave={(patch) => {
-            updateLoan(editingLoan.id, patch);
+            if (editingLoan.id === NEW_LOAN) {
+              const balance = patch.currentBalance ?? 0;
+              useStore.getState().addLoan({
+                ...editingLoan, ...patch,
+                id: uid(),
+                originalAmount: balance,
+                monthlyPayment: patch.monthlyPayment ||
+                  Math.round(monthlyPayment(balance, patch.ratePct ?? 6.5, patch.termYears ?? 30)),
+              });
+              toast("Loan added");
+            } else {
+              updateLoan(editingLoan.id, patch);
+              toast("Loan updated");
+            }
             setEditingLoan(null);
-            toast("Loan updated");
+          }}
+        />
+      )}
+
+      {addingTenant && (
+        <TenantEditModal
+          tenant={{
+            id: "", propertyId: p.id,
+            unitLabel: `Unit ${tenants.length + 1}`, name: "", email: "", phone: "",
+            rent: p.underwriting.rentPerUnit,
+            leaseStart: todayISO(),
+            leaseEnd: new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
+            status: "current", balanceOwed: 0,
+          }}
+          onClose={() => setAddingTenant(false)}
+          onSave={(patch) => {
+            useStore.getState().addTenant({
+              id: uid(), propertyId: p.id,
+              unitLabel: patch.unitLabel ?? "Unit", name: patch.name ?? "Tenant",
+              email: patch.email ?? "", phone: patch.phone ?? "",
+              rent: patch.rent ?? 0,
+              leaseStart: patch.leaseStart ?? todayISO(),
+              leaseEnd: patch.leaseEnd ?? todayISO(),
+              status: "current", balanceOwed: patch.balanceOwed ?? 0,
+            } as Tenant);
+            setAddingTenant(false);
+            toast("Tenant added");
           }}
         />
       )}
