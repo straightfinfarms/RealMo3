@@ -34,7 +34,27 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://straightfinfarms.github.io/RealMo3/)",
       "Bash(git commit -q -m 'Analyzer save asks watchlist vs owned; add loan/tenant from property page *)",
       "WebSearch",
-      "Bash(git commit -q -m 'Renovation Estimator: cost catalog → budget → scope of work → work plan → vendors *)"
+      "Bash(git commit -q -m 'Renovation Estimator: cost catalog → budget → scope of work → work plan → vendors *)",
+      "Bash(mdfind -name \"master prompt\")",
+      "Bash(pnpm --version)",
+      "Bash(docker --version)",
+      "Bash(psql --version)",
+      "Bash(redis-server --version)",
+      "Bash(git -C /Users/denizibmlaptop/Documents/RealMo4 status)",
+      "Bash(corepack --version)",
+      "Bash(command -v brew)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(npx tsx *)",
+      "Bash(tee /private/tmp/claude-501/-Users-denizibmlaptop-Documents-RealMo3/ce190d0f-e50b-4a0c-828b-1d653f525d8d/scratchpad/golden.json)",
+      "Bash(node -e ' *)",
+      "Bash(corepack pnpm *)",
+      "Bash(node -e \"const v=JSON.parse\\(require\\('fs'\\).readFileSync\\(0\\)\\);console.log\\(v.filter\\(x=>x.startsWith\\('16.'\\)\\).slice\\(-5\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(node infra/dev-db.mjs)",
+      "Read(//private/tmp/**)",
+      "Bash(/Users/denizibmlaptop/Documents/RealMo4/node_modules/.pnpm/*/node_modules/@embedded-postgres/*/native/bin/psql --version)",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(mkdir -p /Users/denizibmlaptop/Documents/RealMo4/docs && cp /Users/denizibmlaptop/Downloads/00-ROADMAP.md /Users/denizibmlaptop/Downloads/01-foundation-master-prompt.md /Users/denizibmlaptop/Downloads/08-replatform-plan.md /Users/denizibmlaptop/Documents/RealMo4/docs/ && cp /Users/denizibmlaptop/Documents/RealMo3/BLUEPRINT.md /Users/denizibmlaptop/Documents/RealMo4/docs/BLUEPRINT-realmo3.md && ls /Users/denizibmlaptop/Documents/RealMo4/docs)",
+      "Bash(corepack enable *)"
     ]
   }
 }

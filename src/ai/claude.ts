@@ -10,8 +10,10 @@
 import { TOOL_DEFS, runTool } from "./tools";
 import { dataSnapshot } from "@/store/store";
 import { todayISO } from "@/data/seed";
+import { getBackendStatus } from "@/store/persistence";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
+const PROXY_URL = "/api/copilot";
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -61,14 +63,19 @@ async function callApi(
   system: string,
   messages: ChatTurn[],
 ): Promise<ApiResponse> {
-  const res = await fetch(API_URL, {
+  // Prefer the local backend proxy (key lives in server/.env, never in the
+  // browser). Fall back to browser-direct when there's a browser key.
+  const useProxy = getBackendStatus().connected && getBackendStatus().serverAiKey;
+  const url = useProxy ? PROXY_URL : API_URL;
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (!useProxy) {
+    headers["x-api-key"] = apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+  }
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
+    headers,
     body: JSON.stringify({
       model,
       max_tokens: 2048,
@@ -96,10 +103,11 @@ export async function runCopilot(
   onEvent: (e: CopilotEvent) => void,
 ): Promise<ChatTurn[]> {
   const { apiKey, model } = dataSnapshot().settings;
-  if (!apiKey) {
+  const backend = getBackendStatus();
+  if (!apiKey && !(backend.connected && backend.serverAiKey)) {
     onEvent({
       type: "error",
-      text: "No API key set. Add your Anthropic API key in Settings → AI Copilot to bring the copilot online.",
+      text: "No API key available. Add your Anthropic API key in Settings → AI Copilot, or set ANTHROPIC_API_KEY in server/.env and run the backend.",
     });
     return history;
   }

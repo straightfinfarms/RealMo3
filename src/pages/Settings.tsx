@@ -1,10 +1,12 @@
 /* ============================================================================
  * Settings — AI copilot config, investor targets, theme, data management.
  * ========================================================================== */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore, dataSnapshot } from "@/store/store";
 import { toast } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import type { AppData } from "@/data/types";
+import { checkBackend, getBackendStatus, onBackendStatus, type BackendStatus } from "@/store/persistence";
 
 const MODELS = [
   { id: "claude-sonnet-5", label: "Claude Sonnet 5 — fast + smart (recommended)" },
@@ -19,7 +21,13 @@ export function Settings() {
   const clearAll = useStore((s) => s.clearAll);
   const importData = useStore((s) => s.importData);
   const [showKey, setShowKey] = useState(false);
+  const [backend, setBackend] = useState<BackendStatus>(getBackendStatus());
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    void checkBackend();
+    return onBackendStatus(setBackend);
+  }, []);
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify(dataSnapshot(), null, 2)], { type: "application/json" });
@@ -59,10 +67,47 @@ export function Settings() {
       <div className="card">
         <div className="card-head">
           <div>
+            <div className="card-title">⛁ Data backend</div>
+            <div className="card-sub">
+              Run <code className="mono">npm run server</code> to store everything in a real SQLite
+              database instead of only this browser.
+            </div>
+          </div>
+          <span className="spacer" />
+          <Badge color={backend.connected ? "green" : "gray"} dot>
+            {backend.connected ? "SQLite connected" : "Browser-only mode"}
+          </Badge>
+        </div>
+        {backend.connected ? (
+          <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.6 }}>
+            Database: <code className="mono">{backend.dbPath}</code>
+            <br />
+            Every change is written to SQLite (source of truth) and mirrored to this browser
+            as an offline cache. Server-side AI key:{" "}
+            {backend.serverAiKey ? (
+              <Badge color="green">configured — browser key not needed</Badge>
+            ) : (
+              <Badge color="yellow">not set — add ANTHROPIC_API_KEY to server/.env</Badge>
+            )}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.6 }}>
+            Data lives in this browser's localStorage (export below for backups). Start the
+            backend with <code className="mono">npm run server</code> and reload to upgrade to SQLite.
+          </div>
+        )}
+      </div>
+
+      <div style={{ height: 14 }} />
+
+      <div className="card">
+        <div className="card-head">
+          <div>
             <div className="card-title">✦ AI Copilot</div>
             <div className="card-sub">
-              Your key is stored only in this browser's localStorage and sent directly to
-              Anthropic — no middleman server. Get a key at console.anthropic.com.
+              {backend.connected && backend.serverAiKey
+                ? "The backend proxies Claude with its own key (server/.env) — no browser key needed. A browser key below overrides it."
+                : "Your key is stored only in this browser's localStorage and sent directly to Anthropic — no middleman server. Get a key at console.anthropic.com."}
             </div>
           </div>
         </div>

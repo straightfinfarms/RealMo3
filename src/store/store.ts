@@ -5,7 +5,8 @@
  * pages (see BLUEPRINT.md).
  * ========================================================================== */
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { hybridStorage } from "./persistence";
 import type {
   AppData, Property, Stage, TodoItem, Transaction, Doc, TimelineEvent,
   RenovationProject, Tenant, Settings, RenoTask, BudgetLine, Loan,
@@ -195,6 +196,7 @@ export const useStore = create<AppState>()(
     {
       name: "brrrr-os-v3",
       version: 1,
+      storage: createJSONStorage(() => hybridStorage),
     },
   ),
 );
